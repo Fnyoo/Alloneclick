@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "serverkit-cli"
+version = "0.2.0"
+description = "A CLI toolkit for installing, configuring, and verifying Linux server services."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "ServerKit contributors"}]
+keywords = ["linux", "server", "cli", "debian", "ubuntu", "sysadmin", "bind9"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: System Administrators",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+  "typer>=0.12",
+  "rich>=13.7",
+  "Jinja2>=3.1",
+]
+
+[project.scripts]
+serverkit = "serverkit.cli:app"
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+
+[tool.setuptools.packages.find]
+include = ["serverkit*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
