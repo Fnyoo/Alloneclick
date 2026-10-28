@@ -40,7 +40,7 @@ Other APT-based distributions may work, but are not currently treated as tested 
 Clone the repository, then run:
 
 ```bash
-git clone <Alloneclick>
+git clone Alloneclick
 cd serverkit
 python3 -m venv .venv
 source .venv/bin/activate
