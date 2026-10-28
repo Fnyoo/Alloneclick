@@ -1,4 +1,4 @@
-# ServerKit CLI
+# ServerKit 
 
 **A command-line toolkit for managing common server services on Debian and Ubuntu.**
 
@@ -40,7 +40,7 @@ Other APT-based distributions may work, but are not currently treated as tested 
 Clone the repository, then run:
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
+git clone <Alloneclick>
 cd serverkit
 python3 -m venv .venv
 source .venv/bin/activate
@@ -50,7 +50,7 @@ python -m pip install -e ".[dev]"
 
 Replace `<YOUR_GITHUB_REPOSITORY_URL>` with the repository URL after creating it on GitHub.
 
-Check the CLI:
+Check the :
 
 ```bash
 serverkit --help
