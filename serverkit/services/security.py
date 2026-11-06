@@ -1,5 +1,5 @@
 """Security: UFW, Fail2ban, AppArmor, Suricata, Snort, ClamAV."""
-from .base import Service, ServiceCategory
+from .services.base import Service, ServiceCategory
 
 
 class SecurityServices(ServiceCategory):

@@ -1,5 +1,5 @@
 """Remote Management: OpenSSH, Cockpit, Webmin, RustDesk."""
-from .base import Service, ServiceCategory
+from .services.base import Service, ServiceCategory
 
 
 class RemoteServices(ServiceCategory):

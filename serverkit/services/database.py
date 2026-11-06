@@ -1,5 +1,5 @@
 """Database: MariaDB, MySQL, PostgreSQL, MongoDB, Redis, SQLite."""
-from .base import Service, ServiceCategory
+from .services.base import Service, ServiceCategory
 
 
 class DatabaseServices(ServiceCategory):

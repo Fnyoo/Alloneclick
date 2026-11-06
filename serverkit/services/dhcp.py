@@ -1,5 +1,5 @@
 """DHCP: Kea DHCP, ISC DHCP."""
-from .base import Service, ServiceCategory
+from .services.base import Service, ServiceCategory
 
 
 class DhcpServices(ServiceCategory):
