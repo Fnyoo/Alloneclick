@@ -295,6 +295,13 @@ def manage_services() -> None:
 
 
 # ------------------------------------------------------------------ [4] VERIFY
+def verify_services() -> None:
+    pool = installed_pool()
+    if not pool:
+        ui.warn("Belum ada layanan terpasang.")
+        return
+    ui.section("VERIFY SERVICES")
+    rows = []
     for s in pool:
         if s.units:
             unit = s.units[0]
@@ -303,14 +310,19 @@ def manage_services() -> None:
         else:
             active = "n/a"
             enabled = "n/a"
-        port = "-" if not s.port else (f"{s.port} OK" if utils.port_open(s.port) else f"{s.port} tutup")
+        port = "-" if not s.port else (
+            f"{s.port} OK" if utils.port_open(s.port) else f"{s.port} tutup"
+        )
         cfg = "-"
         if s.check_cmd:
             r = utils.run(list(s.check_cmd))
             cfg = "OK" if r.returncode == 0 else "ERROR"
         rows.append((s.key, active, enabled, port, cfg))
-    ui.table("Hasil verifikasi", ["Layanan", "Berjalan", "Autostart", "Port", "Konfigurasi"], rows)
-
+    ui.table(
+        "Hasil verifikasi",
+        ["Layanan", "Berjalan", "Autostart", "Port", "Konfigurasi"],
+        rows,
+    )
 # ------------------------------------------------------------------ [5] UPDATE
 def update_services() -> None:
     pool = installed_pool()
