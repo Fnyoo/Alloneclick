@@ -1,5 +1,5 @@
 """Container: Docker, Podman, containerd, LXC."""
-from .services.base import Service, ServiceCategory
+from .base import Service, ServiceCategory
 
 
 class ContainerServices(ServiceCategory):
