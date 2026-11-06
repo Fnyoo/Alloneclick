@@ -14,8 +14,9 @@ from .services import SERVICES, Service, parse_selection
 def status_of(s: Service) -> str:
     if not utils.pkg_installed(s.packages[0]):
         return "-"
+    if not s.units:
+        return "paket"
     return "aktif" if utils.unit_active(s.units[0]) else "terpasang"
-
 
 def show_services(title: str, pool: list[Service], with_status: bool = True) -> None:
     rows = []
@@ -103,6 +104,8 @@ def configurator_pool() -> list[Service]:
 def _config_status(s: Service) -> str:
     if not utils.pkg_installed(s.packages[0]):
         return "belum terpasang"
+    if not s.units:
+        return "siap"
     return "siap" if utils.unit_active(s.units[0]) else "terpasang (mati)"
 
 
@@ -264,8 +267,11 @@ def configure_services() -> None:
 
 # ------------------------------------------------------------------ [3] MANAGE
 def manage_services() -> None:
-    pool = installed_pool()
+    pool = [s for s in installed_pool() if s.units]
     ui.section("MANAGE SERVICES")
+    if not pool:
+        ui.warn("Tidak ada layanan berbasis systemd yang terpasang.")
+        return
     show_services("Layanan terpasang", pool)
     chosen = pick("Pilih layanan", pool)
     if not chosen:
@@ -289,17 +295,14 @@ def manage_services() -> None:
 
 
 # ------------------------------------------------------------------ [4] VERIFY
-def verify_services() -> None:
-    pool = installed_pool()
-    if not pool:
-        ui.warn("Belum ada layanan terpasang.")
-        return
-    ui.section("VERIFY SERVICES")
-    rows = []
     for s in pool:
-        unit = s.units[0]
-        active = "OK" if utils.unit_active(unit) else "MATI"
-        enabled = "ya" if utils.unit_enabled(unit) else "tidak"
+        if s.units:
+            unit = s.units[0]
+            active = "OK" if utils.unit_active(unit) else "MATI"
+            enabled = "ya" if utils.unit_enabled(unit) else "tidak"
+        else:
+            active = "n/a"
+            enabled = "n/a"
         port = "-" if not s.port else (f"{s.port} OK" if utils.port_open(s.port) else f"{s.port} tutup")
         cfg = "-"
         if s.check_cmd:
@@ -307,7 +310,6 @@ def verify_services() -> None:
             cfg = "OK" if r.returncode == 0 else "ERROR"
         rows.append((s.key, active, enabled, port, cfg))
     ui.table("Hasil verifikasi", ["Layanan", "Berjalan", "Autostart", "Port", "Konfigurasi"], rows)
-
 
 # ------------------------------------------------------------------ [5] UPDATE
 def update_services() -> None:
