@@ -7,7 +7,10 @@ from pathlib import Path
 
 from . import __version__, backup, netdiag, sysinfo, ui, utils
 from .configurators import CONFIGURATORS
-from .services import SERVICES, Service, parse_selection
+from .services import (
+    SERVICES, Service, parse_selection, BY_KEY,
+    by_category,
+)
 
 
 # ------------------------------------------------------------------ helper umum
@@ -17,6 +20,7 @@ def status_of(s: Service) -> str:
     if not s.units:
         return "paket"
     return "aktif" if utils.unit_active(s.units[0]) else "terpasang"
+
 
 def show_services(title: str, pool: list[Service], with_status: bool = True) -> None:
     rows = []
@@ -54,11 +58,60 @@ def pick(prompt: str, pool: list[Service]) -> list[Service] | None:
 
 # ------------------------------------------------------------------ [1] INSTALL
 def install_services() -> None:
-    ui.section("DAFTAR LAYANAN")
-    show_services("Daftar Layanan", SERVICES)
-    chosen = pick("Masukkan nomor layanan", SERVICES)
-    if not chosen:
+    cats = by_category()
+    cat_list = list(cats.keys())
+
+    ui.section("KATEGORI LAYANAN")
+    rows = []
+    for i, cat in enumerate(cat_list, 1):
+        svcs = cats[cat]
+        installed = sum(1 for s in svcs if utils.pkg_installed(s.packages[0]))
+        ext = sum(1 for s in svcs if s.external_repo)
+        rows.append((i, cat, f"{installed}/{len(svcs)}",
+                     f"{ext} butuh repo" if ext else "-"))
+    ui.table("Kategori", ["No", "Kategori", "Terpasang", "Catatan"], rows)
+
+    print("Ketik nomor kategori, nama layanan langsung (mis. nginx),")
+    print("'all' untuk semua, atau 0=batal.\n")
+    raw = input("Pilih kategori / layanan: ").strip()
+    if raw in ("", "0"):
         return
+
+    if raw.lower() in ("all", "semua", "*"):
+        chosen = list(SERVICES)
+        ui.warn(f"Mode 'all' memilih SEMUA {len(chosen)} layanan.")
+        if not ui.confirm("Yakin instal semua layanan?", default=False):
+            return
+
+    elif any(tok in BY_KEY for tok in raw.replace(" ", ",").split(",") if tok):
+        try:
+            chosen = parse_selection(raw, SERVICES)
+        except ValueError as exc:
+            ui.error(str(exc))
+            return
+
+    else:
+        try:
+            idx = int(raw)
+        except ValueError:
+            ui.error("Masukkan nomor kategori, nama layanan, atau 'all'.")
+            return
+        if not 1 <= idx <= len(cat_list):
+            ui.error(f"Nomor kategori harus 1-{len(cat_list)}.")
+            return
+        cat = cat_list[idx - 1]
+        pool = cats[cat]
+
+        ui.section(f"KATEGORI: {cat.upper()}")
+        show_services(f"Layanan di kategori {cat}", pool)
+        sub = input("\nPilih layanan (contoh: 1,3 | 1-3 | all | 0=batal): ").strip()
+        if sub in ("", "0"):
+            return
+        try:
+            chosen = parse_selection(sub, pool)
+        except ValueError as exc:
+            ui.error(str(exc))
+            return
 
     keys = {s.key for s in chosen}
     conflicts = [(s, keys & set(s.conflicts)) for s in chosen if keys & set(s.conflicts)]
@@ -71,6 +124,11 @@ def install_services() -> None:
     if external and not ui.confirm(
             "Beberapa layanan butuh repo vendor: " +
             ", ".join(s.name for s in external) + ". Lanjut?", default=False):
+        return
+
+    ui.table("Akan diinstal", ["No", "Kunci", "Layanan", "Kategori"],
+             [(i, s.key, s.name, s.category) for i, s in enumerate(chosen, 1)])
+    if not ui.confirm(f"Instal {len(chosen)} layanan sekarang?", default=True):
         return
 
     ui.info("Memperbarui indeks paket (apt update)...")
@@ -90,6 +148,7 @@ def install_services() -> None:
         else:
             ui.error(f"Gagal menginstal {s.name}. "
                      f"{'Cek repo vendor.' if s.external_repo else 'Cek nama paket di apt.'}")
+
     for s in done:
         if s.key in CONFIGURATORS and ui.confirm(f"Konfigurasi {s.name} sekarang?"):
             CONFIGURATORS[s.key]()
@@ -97,7 +156,6 @@ def install_services() -> None:
 
 # ------------------------------------------------------------------ [2] CONFIGURE
 def configurator_pool() -> list[Service]:
-    """Semua layanan yang punya konfigurator, terpasang maupun belum."""
     return [s for s in SERVICES if s.key in CONFIGURATORS]
 
 
@@ -110,7 +168,6 @@ def _config_status(s: Service) -> str:
 
 
 def _run_configurator(s: Service, backup_first: bool) -> bool:
-    """Jalankan satu konfigurator dengan opsi backup. Kembalikan True bila tidak crash."""
     if not utils.pkg_installed(s.packages[0]):
         ui.warn(f"{s.name} belum terpasang — lewati.")
         return False
@@ -131,7 +188,6 @@ def _run_configurator(s: Service, backup_first: bool) -> bool:
 
 
 def _edit_manual(s: Service) -> None:
-    """Buka file konfigurasi layanan di $EDITOR."""
     if not s.config_paths:
         ui.warn(f"{s.name} tidak punya config_paths terdaftar.")
         return
@@ -202,7 +258,8 @@ def configure_services() -> None:
             return
         ui.table("Akan dikonfigurasi", ["No", "Layanan"],
                  [(i, s.name) for i, s in enumerate(installed, 1)])
-        if not ui.confirm(f"Konfigurasi {len(installed)} layanan sekaligus?", default=False):
+        if not ui.confirm(f"Konfigurasi {len(installed)} layanan sekaligus?",
+                          default=False):
             return
         ok = fail = 0
         for s in installed:
@@ -217,7 +274,8 @@ def configure_services() -> None:
 
     if choice == "3":
         ui.table("Layanan", ["No", "Kunci", "Layanan", "Status"],
-                 [(i, s.key, s.name, _config_status(s)) for i, s in enumerate(pool, 1)])
+                 [(i, s.key, s.name, _config_status(s))
+                  for i, s in enumerate(pool, 1)])
         raw = input("\nPilih nomor layanan (0=batal): ").strip()
         if not raw.isdigit() or not 1 <= int(raw) <= len(pool):
             return
@@ -229,7 +287,8 @@ def configure_services() -> None:
         return
 
     ui.table("Konfigurator tersedia", ["No", "Kunci", "Layanan", "Status"],
-             [(i, s.key, s.name, _config_status(s)) for i, s in enumerate(pool, 1)])
+             [(i, s.key, s.name, _config_status(s))
+              for i, s in enumerate(pool, 1)])
     ui.info("Contoh: 1,3 | 1-3 | bind9,nginx | all")
     raw = input("Pilih layanan (0=batal): ").strip()
     if raw in ("", "0"):
@@ -243,7 +302,8 @@ def configure_services() -> None:
     not_installed = [s for s in chosen if not utils.pkg_installed(s.packages[0])]
     if not_installed:
         ui.warn("Belum terpasang: " + ", ".join(s.name for s in not_installed))
-        if not ui.confirm("Tetap lanjut (yang belum terpasang akan dilewati)?", default=False):
+        if not ui.confirm("Tetap lanjut (yang belum terpasang akan dilewati)?",
+                          default=False):
             return
 
     if backup_first and any(utils.pkg_installed(s.packages[0]) for s in chosen):
@@ -279,8 +339,8 @@ def manage_services() -> None:
     actions = {"1": "start", "2": "stop", "3": "restart", "4": "reload",
                "5": "enable", "6": "disable", "7": "status", "8": "logs"}
     ui.menu([("1", "Start"), ("2", "Stop"), ("3", "Restart"), ("4", "Reload"),
-             ("5", "Enable (autostart)"), ("6", "Disable"), ("7", "Status"), ("8", "Lihat log"),
-             ("0", "Batal")])
+             ("5", "Enable (autostart)"), ("6", "Disable"),
+             ("7", "Status"), ("8", "Lihat log"), ("0", "Batal")])
     act = actions.get(input("Select option: ").strip())
     if not act:
         return
@@ -295,6 +355,13 @@ def manage_services() -> None:
 
 
 # ------------------------------------------------------------------ [4] VERIFY
+def verify_services() -> None:
+    pool = installed_pool()
+    if not pool:
+        ui.warn("Belum ada layanan terpasang.")
+        return
+    ui.section("VERIFY SERVICES")
+    rows = []
     for s in pool:
         if s.units:
             unit = s.units[0]
@@ -303,13 +370,16 @@ def manage_services() -> None:
         else:
             active = "n/a"
             enabled = "n/a"
-        port = "-" if not s.port else (f"{s.port} OK" if utils.port_open(s.port) else f"{s.port} tutup")
+        port = "-" if not s.port else (
+            f"{s.port} OK" if utils.port_open(s.port) else f"{s.port} tutup")
         cfg = "-"
         if s.check_cmd:
             r = utils.run(list(s.check_cmd))
             cfg = "OK" if r.returncode == 0 else "ERROR"
         rows.append((s.key, active, enabled, port, cfg))
-    ui.table("Hasil verifikasi", ["Layanan", "Berjalan", "Autostart", "Port", "Konfigurasi"], rows)
+    ui.table("Hasil verifikasi",
+             ["Layanan", "Berjalan", "Autostart", "Port", "Konfigurasi"], rows)
+
 
 # ------------------------------------------------------------------ [5] UPDATE
 def update_services() -> None:
@@ -333,7 +403,8 @@ def uninstall_services() -> None:
     if not chosen:
         return
     purge = ui.confirm("Hapus juga file konfigurasi & data (purge)?", default=False)
-    ui.warn("Akan dihapus: " + ", ".join(s.name for s in chosen) + (" [PURGE]" if purge else ""))
+    ui.warn("Akan dihapus: " + ", ".join(s.name for s in chosen)
+            + (" [PURGE]" if purge else ""))
     if not ui.confirm("Yakin?", default=False):
         return
     if purge:
@@ -343,13 +414,13 @@ def uninstall_services() -> None:
     for s in chosen:
         for u in s.units:
             utils.systemctl("stop", u)
-        (ui.ok if utils.apt_remove(s.packages, purge) else ui.error)(f"Uninstall {s.name}")
+        (ui.ok if utils.apt_remove(s.packages, purge) else ui.error)(
+            f"Uninstall {s.name}")
     utils.apt_autoremove()
 
 
 # ------------------------------------------------------------------ [7] SERVER INFO
 def server_information() -> None:
-    """Wrapper: sysinfo.show() sudah berisi submenu lengkap."""
     sysinfo.show()
 
 
