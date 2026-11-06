@@ -1,5 +1,5 @@
 """VPN: WireGuard, OpenVPN, StrongSwan."""
-from .services.base import Service, ServiceCategory
+from .base import Service, ServiceCategory
 
 
 class VpnServices(ServiceCategory):

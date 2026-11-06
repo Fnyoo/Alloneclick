@@ -1,5 +1,5 @@
 """Development: Git, Gitea, Jenkins, GitLab Runner, Python, Node.js."""
-from .services.base import Service, ServiceCategory
+from .base import Service, ServiceCategory
 
 
 class DevelopmentServices(ServiceCategory):

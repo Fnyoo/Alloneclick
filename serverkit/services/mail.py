@@ -1,5 +1,5 @@
 """Mail: Postfix, Dovecot, Exim4, Rspamd, Roundcube."""
-from .services.base import Service, ServiceCategory
+from .base import Service, ServiceCategory
 
 
 class MailServices(ServiceCategory):

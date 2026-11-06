@@ -1,5 +1,5 @@
 """File Sharing: Samba, NFS, vsftpd, ProFTPD."""
-from .services.base import Service, ServiceCategory
+from .base import Service, ServiceCategory
 
 
 class FileSharingServices(ServiceCategory):

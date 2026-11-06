@@ -1,5 +1,5 @@
 """Media Server: Jellyfin, Plex, Emby, Navidrome, Subsonic, Audiobookshelf, DLNA."""
-from .services.base import Service, ServiceCategory
+from .base import Service, ServiceCategory
 
 
 class MediaServices(ServiceCategory):

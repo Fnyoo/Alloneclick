@@ -1,5 +1,5 @@
 """Proxy & Tunnel: HAProxy, Squid, Traefik, Cloudflared."""
-from .services.base import Service, ServiceCategory
+from .base import Service, ServiceCategory
 
 
 class ProxyServices(ServiceCategory):

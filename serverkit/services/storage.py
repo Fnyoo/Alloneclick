@@ -1,5 +1,5 @@
 """Storage & Cloud: Nextcloud, MinIO, Syncthing, Rclone."""
-from .services.base import Service, ServiceCategory
+from .base import Service, ServiceCategory
 
 
 class StorageServices(ServiceCategory):
