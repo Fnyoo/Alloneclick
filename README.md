@@ -1,4 +1,4 @@
-# SERVERKIT CLI – All-in-One Linux Server Toolkit
+# SERVERSERVICE CLI – All-in-One Linux Server Toolkit
 
 Toolkit terminal interaktif (Python 3, tanpa dependensi wajib) untuk menginstal,
 mengonfigurasi, dan mengelola layanan server di **Ubuntu / Debian**.
@@ -6,8 +6,8 @@ mengonfigurasi, dan mengelola layanan server di **Ubuntu / Debian**.
 ## Menjalankan
 
 ```bash
-# tanpa instalasi (dari folder yang berisi direktori serverkit/)
-sudo python3 -m serverkit
+# tanpa instalasi (dari folder yang berisi direktori serverservice/)
+sudo python3 -m Serverservice
 
 # atau sebagai perintah
 sudo pip install .            # opsional: pip install ".[pretty]" untuk tabel rich
