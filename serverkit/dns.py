@@ -1,5 +1,5 @@
 """DNS: BIND9, dnsmasq, Unbound, PowerDNS."""
-from .base import Service, ServiceCategory
+from .services.base import Service, ServiceCategory
 
 
 class DnsServices(ServiceCategory):

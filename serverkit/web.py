@@ -1,5 +1,5 @@
 """Web Server: Nginx, Apache2, PHP-FPM, Caddy, Lighttpd, OpenLiteSpeed."""
-from .base import Service, ServiceCategory
+from .services.base import Service, ServiceCategory
 
 
 class WebServices(ServiceCategory):

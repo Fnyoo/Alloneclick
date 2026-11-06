@@ -1,5 +1,5 @@
 """Monitoring: Prometheus, Grafana, Netdata, Zabbix, Node Exporter."""
-from .base import Service, ServiceCategory
+from .services.base import Service, ServiceCategory
 
 
 class MonitoringServices(ServiceCategory):
